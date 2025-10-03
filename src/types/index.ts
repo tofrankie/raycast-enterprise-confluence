@@ -152,7 +152,11 @@ export interface Icon {
   isDefault: boolean;
 }
 
-export interface ConfluenceConfig {
+export interface ConfluencePreferences {
+  confluenceDomain: string;
+  confluencePersonalAccessToken: string;
+  confluenceCacheUserAvatar: boolean;
+  confluenceDisplayRecentlyViewed: boolean;
   domain: string;
   token: string;
   baseUrl: string;
@@ -178,3 +182,25 @@ export interface CQLQuery {
     values: string[];
   };
 }
+
+// 预处理字段的类型定义 - 这是唯一的真实来源
+export interface ProcessedFields {
+  contentUrl: string;
+  editUrl: string;
+  spaceUrl: string;
+  creatorAvatarUrl: string;
+  updatedAt: Date;
+  createdAt: Date;
+  isSingleVersion: boolean;
+  isFavourited: boolean;
+  favouritedAt: string | null;
+}
+
+export type ProcessedFieldsKeys = keyof ProcessedFields;
+
+export type ProcessedFieldsSelector<T extends ConfluenceSearchContentResult> = (
+  item: T,
+  baseUrl: string,
+) => ProcessedFields;
+
+export type ProcessedConfluenceSearchContentResult = ConfluenceSearchContentResult & ProcessedFields;

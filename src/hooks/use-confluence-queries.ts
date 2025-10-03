@@ -1,15 +1,33 @@
 import { useInfiniteQuery, useMutation, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { DEFAULT_SEARCH_PAGE_SIZE, COMMAND_NAMES } from "../constants";
 import { searchContent, addToFavorites, removeFromFavorites } from "../utils";
-import type { ConfluenceSearchContentResponse } from "../types";
+import { processContentItems } from "../utils/process-content";
+import type { ConfluenceSearchContentResponse, ProcessedConfluenceSearchContentResult } from "../types";
 
-export const useConfluenceSearchContent = (cql: string, searchPageSize: number = DEFAULT_SEARCH_PAGE_SIZE) => {
-  return useInfiniteQuery<ConfluenceSearchContentResponse, Error>({
+export const useConfluenceSearchContent = (
+  cql: string,
+  searchPageSize: number = DEFAULT_SEARCH_PAGE_SIZE,
+  baseUrl: string,
+) => {
+  return useInfiniteQuery<
+    ConfluenceSearchContentResponse,
+    Error,
+    InfiniteData<ConfluenceSearchContentResponse & { processedResults: ProcessedConfluenceSearchContentResult[] }>
+  >({
     queryKey: [COMMAND_NAMES.CONFLUENCE_SEARCH_CONTENT, { cql, pageSize: searchPageSize }],
     queryFn: async ({ pageParam }) => {
       const start = pageParam as number;
       const response = await searchContent(cql, searchPageSize, start);
       return response;
+    },
+    select: (data) => {
+      return {
+        ...data,
+        pages: data.pages.map((page) => ({
+          ...page,
+          processedResults: processContentItems(page.results, baseUrl),
+        })),
+      };
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
